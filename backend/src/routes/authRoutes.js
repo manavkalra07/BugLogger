@@ -2,6 +2,7 @@ const db = require("../config/db");
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 async function FindUserByEmail(email) {
     const [rows] = await db.query(
@@ -41,14 +42,24 @@ router.post("/login", async (req, res) => {
             });
         }
 
+        console.log("Reached JWT generation");
+        console.log(process.env.JWT_SECRET);
+        const token = jwt.sign(
+            { userId: user.id, email: user.email },
+            process.env.JWT_SECRET,
+            { expiresIn: "1D" }
+        );
+
         return res.status(200).json({
             message: "Login successful",
             userId: user.id,
             name: user.name,
-            email: user.email
+            email: user.email,
+            token: token
         });
+    }
 
-    } catch (error) {
+    catch (error) {
         console.error(error);
 
         return res.status(500).json({
