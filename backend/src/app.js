@@ -1,10 +1,13 @@
+console.log("APP.JS LOADED");
+const cors = require("cors");
 const express = require("express");
 const app = express();
+
 app.get("/", (req, res) => {
   res.send("Welcome to BugLogger");
 });
 
-
+app.use(cors());
 app.use(express.json());
 
 const organizationRoutes = require("./routes/organizationRoutes");

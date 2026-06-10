@@ -23,27 +23,26 @@ async function checkMailExists(email) {
     return rows.length > 0;
 }
 
-async function checkOrganisationExists(orgId) {
+async function findOrganisationByName(organisationName) {
     const [rows] = await db.query(
-        "SELECT * FROM organisations WHERE ID = ?",
-        [orgId]
+        "SELECT * FROM organisations WHERE organisation_name = ?",
+        [organisationName]
     );
 
-    return rows.length > 0;
+    return rows[0];
 }
 
 router.post("/", async (req, res) => {
-    const { name, email, password, organisation_id } = req.body;
+    const { name, email, password, organisation_name } = req.body;
 
-    try {
-        // Validate required fields
-        if (!name || !email || !password || !organisation_id) {
+    try{
+        
+        if (!name || !email || !password || !organisation_name) {
             return res.status(400).json({
                 message: "All fields are required"
             });
         }
 
-        // Check email uniqueness
         const mailExists = await checkMailExists(email);
 
         if (mailExists) {
@@ -52,21 +51,22 @@ router.post("/", async (req, res) => {
             });
         }
 
-        // Check organization exists
-        const orgExists = await checkOrganisationExists(organisation_id);
+        const organisation = await findOrganisationByName(
+            organisation_name
+        );
 
-        if (!orgExists) {
+        if (!organisation) {
             return res.status(404).json({
                 message: "Organization does not exist"
             });
         }
 
-        // Create user
+        // Create user using organisation ID from DB
         const userId = await createUser(
             name,
             email,
             password,
-            organisation_id
+            organisation.ID
         );
 
         return res.status(201).json({
