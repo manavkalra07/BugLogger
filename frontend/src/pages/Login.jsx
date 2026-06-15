@@ -66,7 +66,18 @@ function Login() {
                     />
                 </div>
                 <button type="submit">Login</button>
-            </form>
+
+                <p
+                    style={{
+                    cursor: "pointer",
+                    color: "blue"
+                    }}
+                onClick={() => navigate("/forgot-password")}
+                    >
+                                Forgot Password?
+                </p>
+
+                </form>
         </div>
     );
 }
