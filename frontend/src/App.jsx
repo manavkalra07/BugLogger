@@ -7,6 +7,11 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyOTP from "./pages/VerifyOTP";
 
+import Bugs from "./pages/Bugs";
+import BugDetails from "./pages/BugDetails";
+import Team from "./pages/Team";
+import Settings from "./pages/Settings";
+import Invite from "./pages/Invite";
 function App() {
   return (
     <BrowserRouter>
@@ -17,6 +22,11 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-otp" element={<VerifyOTP />} />
+        <Route path="/bugs" element={<Bugs />} />
+        <Route path="/bugs/:id" element={<BugDetails />} />
+        <Route path="/team" element={<Team />} />
+        <Route path="/invite/:token" element={<Invite />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
     </BrowserRouter>
   );

@@ -13,9 +13,7 @@ function ResetPassword() {
 
     async function handleSubmit(e) {
         e.preventDefault();
-
         setError("");
-
         const response = await fetch(
             "http://localhost:5000/api/auth/reset-password",
             {
@@ -32,23 +30,18 @@ function ResetPassword() {
         );
 
         const data = await response.json();
-
         if (!response.ok) {
             setError(data.message);
             return;
         }
-
         alert("Password reset successful");
-
         navigate("/login");
     }
 
     return (
         <div>
             <h1>Reset Password</h1>
-
             {error && <p>{error}</p>}
-
             <form onSubmit={handleSubmit}>
                 <input
                     type="password"
@@ -57,7 +50,6 @@ function ResetPassword() {
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
                 />
-
                 <button type="submit">
                     Reset Password
                 </button>
@@ -65,5 +57,6 @@ function ResetPassword() {
         </div>
     );
 }
+
 
 export default ResetPassword;

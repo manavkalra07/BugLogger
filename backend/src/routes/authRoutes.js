@@ -4,6 +4,7 @@ const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const sendEmail = require("../services/emailService");
+const { googleLogin } = require("../controllers/authcontroller");
 
 async function FindUserByEmail(email) {
     const [rows] = await db.query(
@@ -14,12 +15,12 @@ async function FindUserByEmail(email) {
     return rows.length > 0 ? rows[0] : null;
 }
 
-function genrateOTP() {
-    const a = (Math.random() * 900000 + 100000);
-    return Math.floor(a);
-}
+const crypto = require("crypto");
+function genrateOTP() { 
+    return crypto.randomInt(100000, 1000000);}
 
 
+router.post('/google',googleLogin);
 router.post("/forgot-password", async (req, res) => {
     try {
         const { email } = req.body;
@@ -39,6 +40,10 @@ router.post("/forgot-password", async (req, res) => {
         }
 
         const otp = genrateOTP().toString();
+        const hashedOTP = await bcrypt.hash(
+            otp,
+            10
+        );
 
         await db.query(
             "DELETE FROM password_reset_otps WHERE user_id = ?",
@@ -53,7 +58,7 @@ router.post("/forgot-password", async (req, res) => {
             `INSERT INTO password_reset_otps
             (user_id, otp, expires_at)
             VALUES (?, ?, ?)`,
-            [user.id, otp, expiresAt]
+            [user.id, hashedOTP, expiresAt]
         );
 
         await sendEmail(
@@ -107,12 +112,16 @@ router.post("/verify-otp", async (req, res) => {
 
         const otpRecord = rows[0];
 
-        if (otpRecord.otp !== otp) {
+        const isValidOTP = await bcrypt.compare(
+            otp,
+            otpRecord.otp
+        );
+
+        if (!isValidOTP) {
             return res.status(400).json({
                 message: "Invalid OTP"
             });
         }
-
         if (
             new Date() >
             new Date(otpRecord.expires_at)
@@ -168,7 +177,12 @@ router.post("/reset-password", async (req, res) => {
 
         const otpRecord = rows[0];
 
-        if (otpRecord.otp !== otp) {
+        const isValidOTP = await bcrypt.compare(
+            otp,
+            otpRecord.otp
+        );
+
+        if (!isValidOTP) {
             return res.status(400).json({
                 message: "Invalid OTP"
             });
