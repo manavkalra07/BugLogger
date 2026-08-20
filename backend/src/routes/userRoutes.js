@@ -6,7 +6,10 @@ const teamMiddleware = require("../middleware/teamMiddleware");
 
 const {
     createUser,
-    getAllUsers
+    getAllUsers,
+    getCurrentUser,
+    updateCurrentUser,
+    updatePassword
 } = require("../controllers/userController");
 
 router.post(
@@ -20,5 +23,9 @@ router.get(
     teamMiddleware,
     getAllUsers
 );
+
+router.get("/me", authMiddleware, getCurrentUser);
+router.put("/me", authMiddleware, updateCurrentUser);
+router.put("/me/password", authMiddleware, updatePassword);
 
 module.exports = router;

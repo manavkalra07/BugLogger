@@ -1,6 +1,15 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
 
+async function findUserById(userId) {
+    const [rows] = await db.query(
+        "SELECT id, name, email, organisation_id FROM users WHERE id = ?",
+        [userId]
+    );
+
+    return rows[0];
+}
+
 async function createUser(name, email, password, orgId) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -118,5 +127,92 @@ exports.getAllUsers = async (req, res) => {
             message: "Internal server error"
         });
 
+    }
+};
+
+exports.getCurrentUser = async (req, res) => {
+    try {
+        const user = await findUserById(req.user.userId);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        return res.status(200).json(user);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+exports.updateCurrentUser = async (req, res) => {
+    const { name, email } = req.body;
+
+    if (!name?.trim() || !email?.trim()) {
+        return res.status(400).json({ message: "Name and email are required" });
+    }
+
+    try {
+        const [existingUsers] = await db.query(
+            "SELECT id FROM users WHERE email = ? AND id <> ?",
+            [email.trim(), req.user.userId]
+        );
+
+        if (existingUsers.length > 0) {
+            return res.status(409).json({ message: "Email already exists" });
+        }
+
+        await db.query(
+            "UPDATE users SET name = ?, email = ? WHERE id = ?",
+            [name.trim(), email.trim(), req.user.userId]
+        );
+
+        return res.status(200).json({
+            message: "Profile updated successfully",
+            user: await findUserById(req.user.userId)
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+exports.updatePassword = async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Current and new passwords are required" });
+    }
+
+    if (newPassword.length < 8) {
+        return res.status(400).json({ message: "New password must be at least 8 characters" });
+    }
+
+    try {
+        const [rows] = await db.query(
+            "SELECT password FROM users WHERE id = ?",
+            [req.user.userId]
+        );
+
+        if (!rows[0] || !rows[0].password) {
+            return res.status(400).json({ message: "Password changes are unavailable for this account" });
+        }
+
+        const matches = await bcrypt.compare(currentPassword, rows[0].password);
+
+        if (!matches) {
+            return res.status(401).json({ message: "Current password is incorrect" });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await db.query(
+            "UPDATE users SET password = ? WHERE id = ?",
+            [hashedPassword, req.user.userId]
+        );
+
+        return res.status(200).json({ message: "Password updated successfully" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Internal server error" });
     }
 };

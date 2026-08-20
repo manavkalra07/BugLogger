@@ -11,6 +11,7 @@ import Bugs from "./pages/Bugs";
 import BugDetails from "./pages/BugDetails";
 import Team from "./pages/Team";
 import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
 import Invite from "./pages/Invite";
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route path="/team" element={<Team />} />
         <Route path="/invite/:token" element={<Invite />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
   );

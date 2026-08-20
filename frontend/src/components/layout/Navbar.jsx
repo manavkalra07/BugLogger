@@ -130,7 +130,7 @@ function Navbar() {
                             <div className="absolute right-0 mt-3 w-60 rounded-xl bg-white shadow-xl border border-slate-200 overflow-hidden">
 
                                 <button
-                                    onClick={() => navigate("/settings")}
+                                    onClick={() => navigate("/profile")}
                                     className="flex items-center gap-3 w-full px-5 py-3 hover:bg-slate-100"
                                 >
 
