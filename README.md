@@ -1,195 +1,153 @@
 # BugLogger
 
-BugLogger is a lightweight bug tracking system designed to help teams report, manage, and track software issues quickly and clearly. This repository contains the backend API (Node.js + Express) and a React frontend (in the `frontend/` folder) for an MVP workflow.
+BugLogger is a full-stack issue tracking application for software teams. It gives a team one workspace to report bugs, assign ownership, follow progress, discuss issues, and monitor the health of the project from a dashboard.
 
----
+The application is built as a React frontend backed by an Express and MySQL API. Authenticated requests use JWT tokens, while passwords and password-reset OTPs are protected with bcrypt.
 
-## Table of contents
+## What It Does
 
-- About
-- Features
-- Tech stack
-- Getting started
-  - Prerequisites
-  - Environment variables
-  - Database setup
-  - Install & Run (backend)
-  - Install & Run (frontend)
-- API reference
-- Project status & roadmap
-- Contributing
-- License
-- Author
+- Registers users against an organization and supports email/password login.
+- Supports Google sign-in when Google OAuth credentials are configured.
+- Creates and manages teams inside an organization.
+- Invites team members through email invitation links.
+- Creates, views, edits, assigns, and deletes bugs.
+- Tracks bug status through open, in-progress, resolved, and closed states.
+- Adds comments and supports media attachments on bug discussions.
+- Records and displays bug activity history.
+- Provides dashboard statistics, recent bugs, and bugs assigned to the current user.
+- Supports forgot-password, OTP verification, and password reset flows.
+- Allows users to edit their profile and change their password from the account pages.
 
----
+## Main User Flow
 
-## About
+1. A user registers with a name, email, password, and existing organization.
+2. The user signs in and receives a JWT session token.
+3. The user selects or creates a team and can invite teammates.
+4. Team members create bugs with details and attachments, assign them to users, and update their status.
+5. Team members collaborate through comments and use the dashboard to see current progress.
 
-BugLogger provides the basics of an issue tracker: user registration and authentication, organizations, and a dashboard showing aggregated information. It's meant as an MVP to build on with bug creation/listing and reporting features.
+## Tech Stack
 
-## Features
+### Frontend
 
-- User registration and authentication
-- Password hashing with bcrypt
-- Organization management
-- Dashboard API with key metrics
-- (Frontend) React + Vite single-page app located in `frontend/`
+- React 19
+- Vite
+- React Router
+- Tailwind CSS
+- Axios
+- Lucide React and React Icons
 
-## Tech stack
+### Backend
 
 - Node.js
-- Express.js
-- MySQL
-- bcrypt
-- React + Vite (frontend)
-- Git & GitHub
+- Express 5
+- MySQL with mysql2
+- JWT authentication
+- bcrypt password hashing
+- Nodemailer for password-reset emails
+- Multer for uploaded media
+- Cloudinary for media storage
+- Google Auth Library for Google sign-in
 
----
+## Project Structure
 
-## Getting started
-
-These steps will get the project running locally.
-
-### Prerequisites
-
-- Node.js (v16 or newer recommended)
-- npm or yarn
-- MySQL server
-
-### Environment variables
-
-Create a `.env` file in the project root with values similar to:
-
+```text
+BugLogger/
+├── backend/
+│   └── src/
+│       ├── controllers/   Request and business logic
+│       ├── middleware/    JWT and team authorization
+│       ├── routes/        API route definitions
+│       ├── services/      Email, uploads, and Cloudinary services
+│       ├── config/        Database connection
+│       └── server.js      Backend entry point
+└── frontend/
+	└── src/
+		├── pages/         Login, dashboard, bugs, team, profile, and settings
+		├── components/    Reusable UI and bug workflow components
+		├── api/            Axios API modules
+		└── App.jsx        Client-side routes
 ```
-PORT=4000
-NODE_ENV=development
+
+## API Overview
+
+All protected endpoints require an `Authorization: Bearer <token>` header. Team-scoped endpoints also use the `x-team-id` header.
+
+| Area | Endpoints |
+| --- | --- |
+| Authentication | `POST /api/auth/login`, `POST /api/auth/google` |
+| Password recovery | `POST /api/auth/forgot-password`, `POST /api/auth/verify-otp`, `POST /api/auth/reset-password` |
+| Users | `POST /api/users`, `GET /api/users/me`, `PUT /api/users/me`, `PUT /api/users/me/password` |
+| Organizations | `POST /api/organizations` |
+| Dashboard | `GET /api/dashboard/stats`, `GET /api/dashboard/recent`, `GET /api/dashboard/assigned` |
+| Teams | `GET /api/team`, `POST /api/team`, `GET /api/team/members`, `POST /api/team/invite` |
+| Bugs | `POST /api/bugs`, `GET /api/bugs`, `GET /api/bugs/:id`, `PUT /api/bugs/:id`, `DELETE /api/bugs/:id` |
+| Bug workflow | `PATCH /api/bugs/:id/status`, `PATCH /api/bugs/:id/assign` |
+| Collaboration | `GET/POST /api/bugs/:id/comments`, comment update/delete, and `GET /api/bugs/:id/activities` |
+
+## Local Setup
+
+### Requirements
+
+- Node.js 18 or newer
+- MySQL
+- A configured BugLogger database schema
+
+### Backend
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+The API runs on `http://localhost:5000` by default.
+
+Create `backend/.env` with the following values:
+
+```env
+PORT=5000
 DB_HOST=localhost
 DB_PORT=3306
-DB_USER=your_db_user
-DB_PASSWORD=your_db_password
-DB_DATABASE=buglogger_db
-JWT_SECRET=your_jwt_secret
+DB_USER=your_mysql_user
+DB_PASSWORD=your_mysql_password
+DB_NAME=buglogger
+JWT_SECRET=replace_with_a_long_random_secret
+APP_URL=http://localhost:5173
+
+# Required for password-reset email delivery
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_gmail_app_password
+
+# Optional Google sign-in
+GOOGLE_CLIENT_ID=your_google_client_id
+
+# Optional Cloudinary media storage
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
-Adjust names to match the codebase if environment variable names differ; search the repo for `process.env.` usage.
+### Frontend
 
-### Database setup
-
-1. Create a MySQL database (example):
-
-   mysql -u root -p
-   CREATE DATABASE buglogger_db;
-   CREATE USER 'buglogger'@'localhost' IDENTIFIED BY 'password';
-   GRANT ALL PRIVILEGES ON buglogger_db.* TO 'buglogger'@'localhost';
-
-2. Run any migration or schema scripts (if present) or use the SQL files in the repo. If migrations are not included, check code for table creation or seed scripts.
-
-### Install & Run (backend)
-
-1. Install dependencies:
-
-```
-npm install
-```
-
-2. Start the server (development):
-
-```
-npm run dev
-```
-
-Or if a start script exists:
-
-```
-npm start
-```
-
-The API should be available at http://localhost:4000 (or the PORT you set).
-
-### Install & Run (frontend)
-
-1. Move into the frontend folder:
-
-```
+```bash
 cd frontend
-```
-
-2. Install dependencies and run:
-
-```
 npm install
 npm run dev
 ```
 
-Open the URL shown by Vite (usually http://localhost:5173) to view the frontend.
+The frontend runs on `http://localhost:5173` and expects the backend API at `http://localhost:5000/api`.
 
----
+For a production build:
 
-## API reference
+```bash
+npm run build
+```
 
-Base URL: http://localhost:4000 (adjust to your PORT)
+## Current Status
 
-### Authentication
-
-- POST /api/users
-  - Register a new user
-  - Body (example): `{ "name": "Alice", "email": "alice@example.com", "password": "secret" }`
-
-- POST /api/auth/login
-  - Login and receive a JWT
-  - Body (example): `{ "email": "alice@example.com", "password": "secret" }`
-
-### Dashboard
-
-- GET /api/dashboard
-  - Returns aggregated data for the user's organization (requires auth header `Authorization: Bearer <token>`)
-
-Notes: Check your route middleware for exact header/auth behavior. Use a tool like Postman or curl to explore endpoints.
-
----
-
-## Project status & roadmap
-
-Current MVP (implemented):
-
-- User registration
-- User authentication
-- Dashboard API
-
-Planned / Upcoming features:
-
-- Create Bug endpoint and UI
-- List / View Bugs
-- Update Bug status (open / in-progress / closed)
-- Dashboard statistics and filters
-- Organization roles & permissions
-- Tests and CI pipeline
-
-If you'd like to help, see Contributing below.
-
----
-
-## Contributing
-
-Contributions are welcome. Typical workflow:
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Commit changes and push
-4. Open a pull request with a clear description and any testing steps
-
-Please add tests for new features if possible. Open an issue first for larger changes to discuss design.
-
----
-
-## License
-
-This project currently has no license file. Add a LICENSE (MIT, Apache-2.0, etc.) if you want to make the terms explicit.
-
----
+BugLogger is an actively developed MVP with the main authentication, team, bug-management, collaboration, dashboard, profile, and settings workflows implemented. Deployment configuration, automated test coverage, role-based permissions, and production environment hardening can be added as next steps.
 
 ## Author
 
-Manav Kalra — manavkalra07
-
-Contact: open issues or pull requests on this repository.
+Manav Kalra
